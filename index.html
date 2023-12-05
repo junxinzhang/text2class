@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情感分析工具</title>
+    <style>
+        /* 图像生成器原有的 CSS */
+        body {
+            text-align: center;
+            margin-top: 50px;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark-mode {
+            background-color: #333;
+            color: white;
+        }
+
+        #textInput {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .dark-mode #textInput {
+            background-color: #555;
+            border-color: #777;
+            color: white;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 情感分析结果的样式 */
+        .result-container {
+            color: inherit; /* 继承父元素的颜色 */
+            background-color: transparent; /* 透明背景 */
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* 深色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            .result-container {
+                color: inherit; /* 在深色模式下继续继承颜色 */
+            }
+        }
+
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 5px solid #ddd;
+        }
+
+        .positive {
+            border-left-color: #4caf50;
+        }
+
+        .negative {
+            border-left-color: #f44336;
+        }
+
+        .score {
+            font-weight: bold;
+        }
+
+        #darkModeToggle {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        #darkModeToggle svg {
+            fill: #007bff;
+            transition: fill 0.3s;
+        }
+
+        .dark-mode #darkModeToggle svg {
+            fill: white;
+        }
+    </style>
+</head>
+<body>
+<button id="darkModeToggle" onclick="toggleDarkMode()">
+    <!-- 夜间模式图标 -->
+    <svg id="darkIcon" style="display: none;" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+        <path d="M1000.22 602.938c-50.549 210.937-240.364 367.729-466.799 367.729-265.098 0-480.001-214.903-480.001-480.001 0-226.431 156.785-416.243 367.716-466.796-56.887 69.198-91.682 157.377-93.367 253.901-3.966 227.193 176.994 414.582 404.186 418.548 101.687 1.775 195.402-33.497 268.265-93.38v0z" fill="#000000" p-id="4370"></path>
+    </svg>
+
+    <!-- 白天模式图标 -->
+    <svg id="lightIcon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+        <path d="M1000.22 602.938c-50.549 210.937-240.364 367.729-466.799 367.729-265.098 0-480.001-214.903-480.001-480.001 0-226.431 156.785-416.243 367.716-466.796-56.887 69.198-91.682 157.377-93.367 253.901-3.966 227.193 176.994 414.582 404.186 418.548 101.687 1.775 195.402-33.497 268.265-93.38v0z" fill="#ffffff" p-id="4370"></path>
+    </svg>
+</button>
+
+<input type="text" id="textInput" placeholder="输入文本进行情感分析">
+<button id="generateButton" onclick="analyzeText()">分析情感</button>
+
+<div class="result-container">
+    <h2>情感分析结果</h2>
+    <div id="results"></div>
+</div>
+
+<script>
+    document.getElementById('textInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // 防止任何默认行为
+            document.getElementById('generateButton').click(); // 触发按钮点击
+        }
+    });
+    
+    function analyzeText() {
+        var inputText = document.getElementById('textInput').value;
+        var apiUrl = 'https://text2class.junxinzhang1616.workers.dev';
+
+        // 获取分析按钮并更新其文本
+        var generateButton = document.getElementById('generateButton');
+        generateButton.textContent = '分析中...';
+        generateButton.disabled = true;
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: inputText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayResults(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('results').textContent = '分析失败，请重试';
+        })
+        .finally(() => {
+            // 请求完成后，恢复按钮原始文本和状态
+            generateButton.textContent = '分析情感';
+            generateButton.disabled = false;
+        });
+    }
+
+    function displayResults(results) {
+        const resultsContainer = document.getElementById('results');
+        resultsContainer.innerHTML = ''; // 清空以前的结果
+
+        results.forEach(result => {
+            const resultElement = document.createElement('div');
+            resultElement.classList.add('result-item');
+            resultElement.classList.add(result.label.toLowerCase()); // 根据标签添加类
+            resultElement.innerHTML = `
+                <p>标签: <span class="label">${result.label}</span></p>
+                <p>置信度: <span class="score">${(result.score * 100).toFixed(2)}%</span></p>
+            `;
+            resultsContainer.appendChild(resultElement);
+        });
+    }
+
+
+    // 夜间模式切换的 JavaScript
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        updateDarkModeIcon();
+    }
+
+    function updateDarkModeIcon() {
+        var darkIcon = document.getElementById('darkIcon');
+        var lightIcon = document.getElementById('lightIcon');
+        if (document.body.classList.contains('dark-mode')) {
+            darkIcon.style.display = 'none';
+            lightIcon.style.display = 'block';
+        } else {
+            darkIcon.style.display = 'block';
+            lightIcon.style.display = 'none';
+        }
+    }
+
+    // 初始夜间模式检查
+    function checkDarkModePreference() {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+        updateDarkModeIcon();
+    }
+    document.addEventListener('DOMContentLoaded', checkDarkModePreference);
+</script>
+</body>
+</html>
