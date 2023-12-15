@@ -42,7 +42,7 @@
 ## 联系方式
 
 - 维护者邮箱：[jason2023zhang@gmail.com](mailto:jason2023zhang@gmail.com)
-- 项目网址：[https://text2image.pages.dev/](https://text2image.pages.dev/)
+- 项目网址：[https://text2class.pages.dev/](https://text2image.pages.dev/)
 - 镜像网址：[https://text2class.vercel.app/](https://text2class.vercel.app/)
 
 ---
